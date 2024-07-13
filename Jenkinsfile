@@ -10,7 +10,7 @@ pipeline {
         jdk "OracleJDK11"
     }
     environment {
-      registry = haleemo/cicdapp
+      registry = "haleemo/cicdapp"
       registryCredential = "dockerhub"
 //         SLACK_CHANNEL = '#devops'
 //         SLACK_CREDENTIALS_ID = 'slacklogin'
@@ -19,6 +19,7 @@ pipeline {
 //         vprofileRegistry = "https://992382655921.dkr.ecr.us-east-1.amazonaws.com"
     }
 
+    stages {
         stage('Build Maven Project') {
             steps {
                 sh 'mvn clean install -DskipTests'
@@ -120,16 +121,17 @@ pipeline {
 
         stage('Remove the unused DokerImage') {
           steps {
-            sh "docker rmi registry:V$BUILD_NUMBER"
+            sh "docker rmi ${registry}:V$BUILD_NUMBER"
           }
         }
 
         stage('Kubernetes deploy') {
-          steps{
+          steps {
             sh "helm upgrade --install --force vprofile-stack helm/vprofilecharts --set appimage=${registry}:V${BUILD_NUMBER} --namespace prod"
           }
         }
     }
+
     post {
         always {
             echo 'Slack Notifications.'
